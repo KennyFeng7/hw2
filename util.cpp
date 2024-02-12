@@ -15,16 +15,21 @@ std::string convToLower(std::string src)
     to a set of words based on the criteria given in the assignment **/
 std::set<std::string> parseStringToWords(string rawWords)
 {
+  std::set<std::string> words;
+  std::string word;
+  std::istringstream stream(convToLower(rawWords)); // Convert the entire string to lowercase first
 
-
-
-
-
-
-
-
-
-
+  // Read word by word from the stream
+  while (stream >> word) {
+    word.erase(std::remove_if(word.begin(), word.end(), [](unsigned char c) { return std::ispunct(c); }), word.end());
+    // Trim the word (though after removing punctuation, leading and trailing spaces should be gone)
+    trim(word);
+    // Ignore words of length less than 3
+    if (word.length() >= 3) {
+      words.insert(word);
+    }
+  }
+  return words;
 }
 
 /**************************************************
