@@ -1,7 +1,6 @@
 #include "mydatastore.h"
 #include "util.h"
 #include <iostream>
-#include <algorithm>
 #include <sstream>
 using namespace std;
 
@@ -18,20 +17,23 @@ MyDataStore::~MyDataStore() {
   for(map<string, User*>::iterator it = users.begin(); it != users.end(); ++ it){
     delete it->second;
   }
-        
+  keywordsToProducts.clear();
+  users.clear();
+  userCarts.clear();      
   
 }
 
 void MyDataStore::addProduct(Product* p) {
-  std::set<std::string> keyword = p->keywords();
-  set<string>::iterator it;
-  for(it = keyword.begin(); it != keyword.end(); ++it){
-    map<string, set<Product*>>::iterator item = keywordsToProducts.find(*it);
-    if(item == keywordsToProducts.end()){
-      keywordsToProducts.insert(pair<string, set<Product*>>(*it, set<Product*>()));
-      item = keywordsToProducts.find(*it);
+  std::set<std::string> keywords = p->keywords();
+  std::set<std::string>::iterator it; 
+  for (it = keywords.begin(); it != keywords.end(); ++it) {
+    std::map<std::string, std::set<Product*>>::iterator item = keywordsToProducts.find(*it);
+    if (item == keywordsToProducts.end()) {
+      std::pair<std::map<std::string, std::set<Product*>>::iterator, bool> insertResult;
+      insertResult = keywordsToProducts.insert(std::make_pair(*it, std::set<Product*>()));
+      item = insertResult.first;
     }
-    (item->second).insert(p);
+    item->second.insert(p);
   }
 }
 
@@ -83,19 +85,21 @@ void MyDataStore::dump(std::ostream& ofile){
     it->second->dump(ofile);
   } 
   ofile << "</users>" << endl;
-  
 }
 
 void MyDataStore::viewcart(const std::string& username){
-  map<string, vector<Product*>>::iterator item = userCarts.find(username);
-  if(item == userCarts.end()){
-    cout << "Invalid username" << endl;
+  std::map<std::string, std::vector<Product*>>::iterator cartIt = userCarts.find(username);
+  if (cartIt == userCarts.end()) {
+    std::cout << "Invalid username" << std::endl;
     return;
   }
-  else{
-    vector<Product*> cart(item->second);
-    for(size_t i = 0; i < cart.size(); ++ i){
-      cout << "Item: " << i + 1 << endl << cart[i]->displayString() << endl;
+  const std::vector<Product*>& cart = cartIt->second;
+  if (cart.empty()) {
+    std::cout << "The cart is empty." << std::endl;
+  } 
+  else {
+    for (size_t i = 0; i < cart.size(); ++i) {
+      std::cout << "Item: " << i + 1  << std::endl << cart[i]->displayString() << std::endl;
     }
   }
 }
@@ -106,7 +110,7 @@ void MyDataStore::addToCart(const std::string& username, Product* product){
     cout << "Invalid request" << endl;
     return;
   }
-  else{
+  else{ 
     userCarts[username].push_back(product);
   }
 }
@@ -117,8 +121,8 @@ void MyDataStore::buycart(const std::string& username) {
     return;
   }
   User* user = users[username];
-  auto& cart = userCarts[username];
-  auto it = cart.begin();
+  std::vector<Product*>& cart = userCarts[username]; 
+  std::vector<Product*>::iterator it = cart.begin(); 
   while(it != cart.end()) {
     Product* product = *it;
     if(product->getQty() > 0 && user->getBalance() >= product->getPrice()) {
@@ -127,7 +131,7 @@ void MyDataStore::buycart(const std::string& username) {
       it = cart.erase(it); 
     } 
     else {
-      ++it;
+      ++it; 
     }
   }
 }
